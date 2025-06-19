@@ -1,0 +1,85 @@
+
+<div class="center">
+  <button class="btn" onclick="toggleModal()">Сплетничать</button>
+</div>
+
+<!-- Модальное окно -->
+<div id="modal" class="modal hidden">
+  <div class="modal-content glass">
+    <h2>Новая сплетня</h2>
+    <button class="close-btn" onclick="toggleModal()">×</button>
+    <form id="gossipForm" method="POST" action="/posts" enctype="multipart/form-data">
+  <textarea name="content" placeholder="Что случилось?" required></textarea>
+  <input type="file" name="images" accept="image/*" multiple onchange="previewImages(this)">
+<div id="preview" class="preview-images"></div>
+  <button type="submit" class="btn">Запустить сплетни</button>
+</form>
+  </div>
+</div>
+
+<!-- Посты -->
+<div class="posts-container">
+<% posts.forEach(post => { %>
+  <div class="post glass">
+    <p><%= post.content %></p>
+
+    <% if (post.imagePaths?.length) { %>
+      <div class="post-images">
+        <% post.imagePaths.forEach(path => { %>
+          <img src="<%= path %>" alt="Фото сплетни">
+        <% }) %>
+      </div>
+    <% } %>
+
+    <div class="post-meta">
+      <div class="author-info">
+        <img class="avatar" src="<%= post.authorImage || '/images/default-avatar.png' %>" alt="аватар">
+        <span><%= post.authorName %></span>
+      </div>
+      <span><%= new Date(post.createdAt).toLocaleString() %></span>
+
+      <% if (isAdmin) { %>
+        <form method="POST" action="/posts/<%= post._id %>?_method=DELETE" style="display:inline;">
+          <button type="submit" class="delete-btn">Удалить</button>
+        </form>
+      <% } %>
+    </div>
+  </div> <!-- ✅ Вот этого не хватало -->
+<% }) %>
+<% if (!posts.length) { %>
+  <p style="text-align:center; color:#777; margin-top:2rem;">Пока никто не сплетничал. Будь первым!</p>
+<% } %>
+
+<script>
+  function toggleModal() {
+    document.getElementById('modal').classList.toggle('hidden');
+  }
+</script>
+<script>
+  function toggleModal() {
+    const modal = document.getElementById('modal');
+    modal.classList.toggle('hidden');
+    if (!modal.classList.contains('hidden')) {
+      document.getElementById('gossipForm').reset();
+      document.getElementById('preview').innerHTML = ''; // сброс превью
+    }
+  }
+
+  function previewImages(input) {
+    const preview = document.getElementById('preview');
+    preview.innerHTML = '';
+
+    if (input.files) {
+      Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'preview-img';
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+</script>
